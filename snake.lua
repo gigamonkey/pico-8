@@ -1,11 +1,56 @@
 -- snake
 
--- direction (dx and dy or maybe a table of those)
--- table of segments
+SIZE = 16 -- 128px display / 8px sprites.
 
+UP    = { dx = 0, dy = -1 }
+DOWN  = { dx = 0, dy = 1 }
+LEFT  = { dx = -1, dy = 0 }
+RIGHT = { dx = 1, dy = 0 }
+
+GRASS = 0
+SNAKE = 1
+FOOD = 2
+SUPER_FOOD = 3
+
+-- sprites for the head.
+heads = { [UP] = 13, [DOWN] = 14, [LEFT] = 15, [RIGHT] = 16 }
+
+snake = {
+  direction = RIGHT,
+  speed = 1,
+  x = 64,
+  y = 64,
+  turns = {},
+  head = 1,
+  tail = 0,
+  segments = { [0] = {x = 64, y = 64} },
+  dead = false,
+}
+
+-- Grid is table keyed with x,y coordinates whose values are the
+-- contents of that cell, either grass, snake, food, or superfood.
+grid = {}
+
+for x = 0, SIZE - 1 do
+  for y = 0, SIZE - 1 do
+    grid[(y * SIZE + x) + 1] = GRASS
+  end
+end
+
+-- Basic game structure
 
 function _init()
-  rectfill(0, 0, 128, 128, 13)
+  cls()
+  grid[to_index({x=13, y=12})] = FOOD
+  grid[to_index({x=0, y=0})] = SUPER_FOOD
+
+  for cell, value in pairs(grid) do
+    local x = ((cell - 1) % SIZE) * 8;
+    local y = ((cell - 1) \ SIZE) * 8;
+    spr(GRASS, x, y)
+    spr(value, x, y)
+  end
+  grid[to_index(snake.segments[0])] = SNAKE
   move(snake)
 end
 
@@ -22,25 +67,32 @@ function _update()
   if (btnp(3)) then
     add(snake.turns, DOWN)
   end
-  move(snake)
+  if not snake.dead then
+    move(snake)
+  end
 end
 
 function _draw()
-  local h = heads[snake.direction]
+  -- TODO: draw the head more smoothly, moving into the cell in
+  -- increments.
   local hd = head(snake)
-  --print("X: " .. hd.x * 8 .. "; Y: " .. hd.y * 8 .. "; h: " .. h)
-
-  spr(h, hd.x, hd.y)
+  if snake.dead then
+    spr(heads[snake.direction] + 4, hd.x, hd.y)
+  else
+    spr(heads[snake.direction], hd.x, hd.y)
+  end
 end
 
+
+-- The rest of the code
+
 function to_cell(i)
-  return { x = i % 8, y = i \ 8 }
+  return { x = (i - 1) % SIZE, y = (i - 1) \ SIZE }
 end
 
 function to_index(cell)
-  return cell.y * 8 + cell.x
+  return (cell.y * SIZE + cell.x) + 1
 end
-
 
 function head(snake)
   return snake.segments[(snake.head + 63) % 64]
@@ -48,6 +100,10 @@ end
 
 function current_cell(snake)
   return { x = (snake.x \ 8) * 8, y = (snake.y \ 8) * 8 }
+end
+
+function next_cell(snake)
+  return { x = snake.x + snake.dx, y = snake.y + snake.dy }
 end
 
 function apply_next_turn(snake)
@@ -61,6 +117,10 @@ function apply_next_turn(snake)
   end
 end
 
+function off_board(cell)
+  return cell.x < 0 or cell.x >= 128 or cell.y < 0 or cell.y >= 128
+end
+
 function legal_turn(d, t)
   return d.dx == t.dy or d.dy == t.dx
 end
@@ -68,46 +128,21 @@ end
 function move(snake)
   snake.x += snake.direction.dx * snake.speed
   snake.y += snake.direction.dy * snake.speed
-  -- draw head with correct sprite
+
   local current = current_cell(snake)
   local head = head(snake)
-  --print("C X: " .. current.x .. " Y: " .. current.y .. ". H X: " .. head.x .. "; Y: " .. head.y)
 
+  -- Entering new cell. If the new cell is off the grid our we are
+  -- crashing into ourself don't actually enter it.
   if (current.x ~= head.x or current.y ~= head.y) then
-    -- Entering new cell.
-
-    -- print("Setting head")
-    -- print("C X: " .. current.x .. " Y: " .. current.y .. ". H X: " .. head.x .. "; Y: " .. head.y)
-    --print("new cell")
-
-    apply_next_turn(snake)
-
-    spr(1, head.x, head.y)
-    snake.segments[(snake.head + 63) % 64] = current
-  else
-    --print("same cell")
+    local i = to_index(current)
+    if off_board(current) or grid[i] == SNAKE then
+      snake.dead = true
+    else
+      apply_next_turn(snake)
+      spr(1, head.x, head.y) -- draw body segment in old head position.
+      grid[to_index(current)] = SNAKE
+      snake.segments[(snake.head + 63) % 64] = current
+    end
   end
 end
-
-
-
-SIZE = 8 -- 128px display / 16px sprites.
-
-UP    = { dx = 0, dy = -1 }
-DOWN  = { dx = 0, dy = 1 }
-LEFT  = { dx = -1, dy = 0 }
-RIGHT = { dx = 1, dy = 0 }
-
--- sprites for the head.
-heads = { [UP] = 13, [DOWN] = 14, [LEFT] = 15, [RIGHT] = 16 }
-
-snake = {
-  direction = RIGHT,
-  speed = 1,
-  x = 64,
-  y = 64,
-  turns = {},
-  head = 1,
-  tail = 0,
-  segments = { [0] = {x = 64, y = 64} }
-}
