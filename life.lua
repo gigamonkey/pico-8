@@ -2,7 +2,7 @@ debug = false
 off = 0
 on = 3
 density = 5
-size = 4
+size = 2
 max_d = 128 / size
 
 speed = 0.5
@@ -37,14 +37,15 @@ end
 
 function _draw()
   if not drawn then
-    if sound_on then
-      sfx(0)
-    end
+
+    if (sound_on) sfx(0)
 
     cls(off)
     for x = 0, max_d - 1 do
       for y = 0, max_d - 1 do
-        rectfill(x * size, y * size, (x + 1) * size, (y + 1) * size, current[x*max_d + y])
+        if current[x*max_d + y] then
+          rectfill(x * size, y * size, ((x + 1) * size) - 1, ((y + 1) * size) - 1, on)
+        end
       end
     end
     drawn = true
@@ -56,9 +57,7 @@ function seed_pop()
   for x = 0, max_d - 1 do
     for y = 0, max_d - 1 do
       if (flr(rnd(density)) == 0) then
-        current[x*max_d + y] = on
-      else
-        current[x*max_d + y] = off
+        current[x*max_d + y] = true
       end
     end
   end
@@ -68,16 +67,8 @@ function next_generation()
   local nextgen = {}
   for x = 0, max_d - 1 do
     for y = 0, max_d - 1 do
-      nextgen[x*max_d + y] = in_next_generation(x, y)
-      if nextgen[x*max_d + y] == on then
-        local n = live_neighbors(x, y)
-        if debug then
-          if n == 2 then
-            nextgen[x*max_d + y] = 3 -- green
-          elseif n == 3 then
-            nextgen[x*max_d + y] = 4 -- orange
-          end
-        end
+      if in_next_generation(x, y) then
+        nextgen[x*max_d + y] = true
       end
     end
   end
@@ -87,16 +78,12 @@ end
 -- value for cell at x, y in next generation
 function in_next_generation(x, y)
   local n = live_neighbors(x, y)
-  if n == 3 or (is_alive(x, y) and n == 2) then
-    return on
-  else
-    return off
-  end
+  return n == 3 or (is_alive(x, y) and n == 2)
 end
 
 -- Is the cell at x, y currently alive?
 function is_alive(x, y)
-  return current[x*max_d + y] != off
+  return current[x*max_d + y] ~= nil
 end
 
 -- number of alive neighbors. doesn't count self.
