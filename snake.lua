@@ -1,6 +1,7 @@
 -- snake
 
 SIZE = 16 -- 128px display / 8px sprites.
+SIZE2D = SIZE * SIZE
 
 UP    = { dx = 0, dy = -1 }
 DOWN  = { dx = 0, dy = 1 }
@@ -21,9 +22,9 @@ snake = {
   x = 64,
   y = 64,
   turns = {},
-  head = 1,
+  head = 0,
   tail = 0,
-  segments = { [0] = {x = 64, y = 64} },
+  segments = {},
   dead = false,
 }
 
@@ -31,27 +32,34 @@ snake = {
 -- contents of that cell, either grass, snake, food, or superfood.
 grid = {}
 
-for x = 0, SIZE - 1 do
-  for y = 0, SIZE - 1 do
-    grid[(y * SIZE + x) + 1] = GRASS
-  end
-end
-
 -- Basic game structure
 
 function _init()
   cls()
+  for x = 0, SIZE - 1 do
+    for y = 0, SIZE - 1 do
+      grid[to_index({x=x, y=y})] = GRASS
+    end
+  end
+
   grid[to_index({x=13, y=12})] = FOOD
   grid[to_index({x=0, y=0})] = SUPER_FOOD
+
+  set_head(snake, {x=8, y=8})
+  set_head(snake, {x=9, y=8})
+  snake.x = 72
+  snake.y = 64
 
   for cell, value in pairs(grid) do
     local x = ((cell - 1) % SIZE) * 8;
     local y = ((cell - 1) \ SIZE) * 8;
+
     spr(GRASS, x, y)
+    if value ~= GRASS then
+      --print("not grass at " .. ((cell - 1) % SIZE) .. "," .. ((cell - 1) \ SIZE))
+    end
     spr(value, x, y)
   end
-  grid[to_index(snake.segments[0])] = SNAKE
-  move(snake)
 end
 
 function _update()
@@ -77,33 +85,43 @@ function _draw()
   -- increments.
   local hd = head(snake)
   if snake.dead then
-    spr(heads[snake.direction] + 4, hd.x, hd.y)
+    spr(heads[snake.direction] + 4, hd.x * 8, hd.y * 8)
   else
-    spr(heads[snake.direction], hd.x, hd.y)
+    spr(heads[snake.direction], hd.x * 8, hd.y * 8)
   end
 end
 
 
 -- The rest of the code
 
-function to_cell(i)
-  return { x = (i - 1) % SIZE, y = (i - 1) \ SIZE }
-end
-
 function to_index(cell)
   return (cell.y * SIZE + cell.x) + 1
 end
 
+function set_head(snake, head)
+  snake.segments[snake.head] = head
+  snake.head = (snake.head + 1) % SIZE2D
+  grid[to_index(head)] = SNAKE
+end
+
+function clear_tail(snake, tail)
+  grid[to_index(tail)] = GRASS
+  snake.tail = (snake.tail + 1) % SIZE2D
+end
+
 function head(snake)
-  return snake.segments[(snake.head + 63) % 64]
+  local is_nil = snake.segments[snake.head - 1] == nil
+  local i = (snake.head + (SIZE2D - 1)) % SIZE2D
+  --print(snake.head .. "; i: " .. i .. "; head is nil: " .. tostring(is_nil))
+  return snake.segments[(snake.head + (SIZE2D - 1)) % SIZE2D]
+end
+
+function tail(snake)
+  return snake.segments[snake.tail]
 end
 
 function current_cell(snake)
-  return { x = (snake.x \ 8) * 8, y = (snake.y \ 8) * 8 }
-end
-
-function next_cell(snake)
-  return { x = snake.x + snake.dx, y = snake.y + snake.dy }
+  return { x = snake.x \ 8, y = snake.y \ 8 }
 end
 
 function apply_next_turn(snake)
@@ -118,7 +136,7 @@ function apply_next_turn(snake)
 end
 
 function off_board(cell)
-  return cell.x < 0 or cell.x >= 128 or cell.y < 0 or cell.y >= 128
+  return cell.x < 0 or cell.x >= SIZE or cell.y < 0 or cell.y >= SIZE
 end
 
 function legal_turn(d, t)
@@ -126,23 +144,31 @@ function legal_turn(d, t)
 end
 
 function move(snake)
+
   snake.x += snake.direction.dx * snake.speed
   snake.y += snake.direction.dy * snake.speed
 
   local current = current_cell(snake)
   local head = head(snake)
+  local tail = tail(snake)
 
   -- Entering new cell. If the new cell is off the grid our we are
-  -- crashing into ourself don't actually enter it.
+  -- crashing into ourself don't actually enter it. If it doesn't
+  -- contain food then we remove our tail.
   if (current.x ~= head.x or current.y ~= head.y) then
     local i = to_index(current)
     if off_board(current) or grid[i] == SNAKE then
       snake.dead = true
     else
+      local is_grass = grid[i] == GRASS
+      --print("grid[" .. i .. "] " .. tostring(grid[i]) .. " is_grass: " .. tostring(is_grass))
       apply_next_turn(snake)
-      spr(1, head.x, head.y) -- draw body segment in old head position.
-      grid[to_index(current)] = SNAKE
-      snake.segments[(snake.head + 63) % 64] = current
+      spr(1, head.x * 8, head.y * 8) -- draw body segment in old head position.
+      set_head(snake, current)
+      if is_grass then
+        clear_tail(snake, tail)
+        spr(0, tail.x * 8, tail.y * 8) -- clear tail
+      end
     end
   end
 end
