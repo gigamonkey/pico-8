@@ -126,7 +126,6 @@ function tail_direction(snake)
   end
 end
 
-
 function head(snake)
   local is_nil = snake.segments[snake.head - 1] == nil
   local i = (snake.head + (SIZE2D - 1)) % SIZE2D
@@ -185,7 +184,27 @@ function move(snake)
       set_head(snake, current)
       if is_grass then
         clear_tail(snake, tail)
+      else
+        random_food()
       end
     end
   end
+end
+
+
+function random_food()
+  local n = 1
+  local pos = nil
+  for cell, value in pairs(grid) do
+    if value == GRASS then
+      if rnd(1) < 1/n then
+        pos = cell
+      end
+      n += 1
+    end
+  end
+  local x = ((pos - 1) % SIZE) * 8;
+  local y = ((pos - 1) \ SIZE) * 8;
+  grid[pos] = FOOD
+  spr(FOOD, x, y)
 end
