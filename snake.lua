@@ -104,10 +104,28 @@ function set_head(snake, head)
   grid[to_index(head)] = SNAKE
 end
 
-function clear_tail(snake, tail)
-  grid[to_index(tail)] = GRASS
+function clear_tail(snake, cell)
+  grid[to_index(cell)] = GRASS
+  spr(0, cell.x * 8, cell.y * 8)
+  --local d = tail_direction(snake)
   snake.tail = (snake.tail + 1) % SIZE2D
+  --local new_tail = tail(snake)
+  --spr(0, new_tail.x * 8, new_tail.y * 8)
+  --spr(21 + d, new_tail.x * 8, new_tail.y * 8)
 end
+
+function tail_direction(snake)
+  local t = tail(snake)
+  local n = snake.segments[(snake.tail + 1) % SIZE2D]
+  local dx = n.x - t.x
+  local dy = n.y - t.y
+  if dx == 0 then
+    return (dy == -1 and 0) or 1
+  else
+    return (dx == -1 and 2) or 3
+  end
+end
+
 
 function head(snake)
   local is_nil = snake.segments[snake.head - 1] == nil
@@ -167,7 +185,6 @@ function move(snake)
       set_head(snake, current)
       if is_grass then
         clear_tail(snake, tail)
-        spr(0, tail.x * 8, tail.y * 8) -- clear tail
       end
     end
   end
