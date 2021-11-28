@@ -42,22 +42,17 @@ function _init()
     end
   end
 
-  grid[to_index({x=13, y=12})] = FOOD
-  grid[to_index({x=0, y=0})] = SUPER_FOOD
-
   set_head(snake, {x=8, y=8})
   set_head(snake, {x=9, y=8})
   snake.x = 72
   snake.y = 64
 
+  random_food()
+
   for cell, value in pairs(grid) do
     local x = ((cell - 1) % SIZE) * 8;
     local y = ((cell - 1) \ SIZE) * 8;
-
     spr(GRASS, x, y)
-    if value ~= GRASS then
-      --print("not grass at " .. ((cell - 1) % SIZE) .. "," .. ((cell - 1) \ SIZE))
-    end
     spr(value, x, y)
   end
 end
@@ -205,6 +200,7 @@ function random_food()
   end
   local x = ((pos - 1) % SIZE) * 8;
   local y = ((pos - 1) \ SIZE) * 8;
-  grid[pos] = FOOD
-  spr(FOOD, x, y)
+  local kind = FOOD + flr(rnd(3))
+  grid[pos] = kind
+  spr(kind, x, y)
 end
