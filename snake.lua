@@ -18,7 +18,7 @@ heads = { [UP] = 13, [DOWN] = 14, [LEFT] = 15, [RIGHT] = 16 }
 
 snake = {
   direction = RIGHT,
-  speed = 1,
+  speed = 5,
   turns = {},
   head = 0,
   tail = 0,
@@ -74,8 +74,9 @@ function _update()
 end
 
 function _draw()
-  local proportion = snake.frames_into_head / 30
-  local offset = snake.speed * (1 - proportion)
+  -- speed is in squares/second
+  local proportion = snake.frames_into_head * snake.speed / 30
+  local offset = (1 - proportion)
 
   local hd = head(snake)
   local sprite = heads[snake.direction] + ((snake.dead and 4) or 0)
@@ -92,6 +93,7 @@ function to_index(cell)
 end
 
 function set_head(snake, head)
+  --print("setting head: " .. xy(head))
   snake.segments[snake.head] = head
   snake.head = (snake.head + 1) % SIZE2D
   grid[to_index(head)] = SNAKE
@@ -143,7 +145,7 @@ function apply_next_turn(snake)
     t = snake.turns[1]
     deli(snake.turns, 1)
     if legal_turn(snake.direction, t) then
-      print("Turned " .. snake.direction.dx .. "," .. snake.direction.dy)
+      --print("Turned " .. snake.direction.dx .. "," .. snake.direction.dy)
       snake.direction = t
       break
     end
@@ -166,7 +168,9 @@ function move(snake)
 
   snake.frames_into_head += 1
 
-  if snake.frames_into_head >= 30 then
+  local proportion = snake.frames_into_head * snake.speed / 30
+
+  if proportion >= 1 then
     -- all the way into the current head.
     apply_next_turn(snake)
     old_head = head(snake)
@@ -178,7 +182,7 @@ function move(snake)
       snake.dead = true
     else
       local is_grass = grid[i] == GRASS
-      print("head: " .. xy(old_head) .. "; new: " .. xy(new_head))
+      --print("head: " .. xy(old_head) .. "; new: " .. xy(new_head))
       spr(1, old_head.x * 8, old_head.y * 8) -- draw body segment in old head position.
       set_head(snake, new_head)
       if is_grass then
