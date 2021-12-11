@@ -43,6 +43,7 @@ function _init()
 
   set_head(snake, {x=8, y=8})
   set_head(snake, {x=9, y=8})
+  snake.frames_into_head = 29
 
   random_food()
 
@@ -82,7 +83,6 @@ function _draw()
   local y = 8 * (hd.y - (snake.direction.dy * offset))
 
   spr(sprite, x, y)
-
 end
 
 -- The rest of the code
@@ -166,7 +166,7 @@ function move(snake)
 
   snake.frames_into_head += 1
 
-  if snake.frames_into_head == 30 then
+  if snake.frames_into_head >= 30 then
     -- all the way into the current head.
     apply_next_turn(snake)
     old_head = head(snake)
