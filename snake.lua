@@ -78,12 +78,35 @@ function _draw()
   local proportion = snake.frames_into_head * snake.speed / 30
   local offset = (1 - proportion)
 
+  -- Erase tail in proportion to how much we've moved. Actually done
+  -- by clearing the cell and then redrawing the tail slightly offset.
+  --rectfill(0, 0, 128, 24, 2)
+
+  local old_tail = previous_tail(snake)
+  if old_tail ~= nil then
+    local new_tail = tail(snake)
+    local td = { dx = new_tail.x - old_tail.x, dy = new_tail.y - old_tail.y }
+
+    spr(0, old_tail.x * 8, old_tail.y * 8)
+    --print("Clear  x: " .. old_tail.x * 8 .. "; y: " .. old_tail.y * 8, 0, 0, 1)
+
+    local tx = old_tail.x + (td.dx * proportion)
+    local ty = old_tail.y + (td.dy * proportion)
+
+    --print("Draw x: " .. (tx * 8) .. "; y: " .. (ty * 8), 0, 8, 1)
+    spr(1, tx * 8, ty * 8)
+  end
+
+  -- Draw head offset back from where it would be if we were all the
+  -- way into the current head cell in proportion to how much we've
+  -- moved.
   local hd = head(snake)
+  --print("Head  x: " .. hd.x * 8 .. "; y: " .. hd.y * 8, 0, 16, 1)
   local sprite = heads[snake.direction] + ((snake.dead and 4) or 0)
   local x = 8 * (hd.x - (snake.direction.dx * offset))
   local y = 8 * (hd.y - (snake.direction.dy * offset))
-
   spr(sprite, x, y)
+
 end
 
 -- The rest of the code
@@ -102,34 +125,25 @@ end
 function clear_tail(snake, cell)
   grid[to_index(cell)] = GRASS
   spr(0, cell.x * 8, cell.y * 8)
-  --local d = tail_direction(snake)
   snake.tail = (snake.tail + 1) % SIZE2D
-  --local new_tail = tail(snake)
-  --spr(0, new_tail.x * 8, new_tail.y * 8)
-  --spr(21 + d, new_tail.x * 8, new_tail.y * 8)
 end
 
 function tail_direction(snake)
-  local t = tail(snake)
-  local n = snake.segments[(snake.tail + 1) % SIZE2D]
-  local dx = n.x - t.x
-  local dy = n.y - t.y
-  if dx == 0 then
-    return (dy == -1 and 0) or 1
-  else
-    return (dx == -1 and 2) or 3
-  end
+  local old = previous_tail(snake)
+  local new = tail(snake)
+  return { dx = new.x - old.x, dy = new.y - old.y }
 end
 
 function head(snake)
-  local is_nil = snake.segments[snake.head - 1] == nil
-  local i = (snake.head + (SIZE2D - 1)) % SIZE2D
-  --print(snake.head .. "; i: " .. i .. "; head is nil: " .. tostring(is_nil))
   return snake.segments[(snake.head + (SIZE2D - 1)) % SIZE2D]
 end
 
 function tail(snake)
   return snake.segments[snake.tail]
+end
+
+function previous_tail(snake)
+  return snake.segments[(snake.tail + (SIZE2D - 1)) % SIZE2D]
 end
 
 function current_cell(snake)
@@ -171,7 +185,6 @@ function move(snake)
   local proportion = snake.frames_into_head * snake.speed / 30
 
   if proportion >= 1 then
-    -- all the way into the current head.
     apply_next_turn(snake)
     old_head = head(snake)
     new_head = next_cell(old_head, snake.direction)
