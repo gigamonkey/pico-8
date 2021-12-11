@@ -19,13 +19,12 @@ heads = { [UP] = 13, [DOWN] = 14, [LEFT] = 15, [RIGHT] = 16 }
 snake = {
   direction = RIGHT,
   speed = 1,
-  x = 64,
-  y = 64,
   turns = {},
   head = 0,
   tail = 0,
   segments = {},
   dead = false,
+  frames_into_head = 0
 }
 
 -- Grid is table keyed with x,y coordinates whose values are the
@@ -44,8 +43,6 @@ function _init()
 
   set_head(snake, {x=8, y=8})
   set_head(snake, {x=9, y=8})
-  snake.x = 72
-  snake.y = 64
 
   random_food()
 
@@ -76,16 +73,33 @@ function _update()
 end
 
 function _draw()
-  -- TODO: draw the head more smoothly, moving into the cell in
-  -- increments.
+  local sprite = heads[snake.direction] + ((snake.dead and 4) or 0)
   local hd = head(snake)
-  if snake.dead then
-    spr(heads[snake.direction] + 4, hd.x * 8, hd.y * 8)
-  else
-    spr(heads[snake.direction], hd.x * 8, hd.y * 8)
-  end
-end
 
+  local proportion = snake.frames_into_head / 30
+
+  local x = hd.x * 8
+  local y = hd.y * 8
+
+  local offset = 8 * snake.speed * (1 - proportion)
+
+  if snake.direction.dx != 0 then
+    if snake.direction.dx == 1 then
+      x -= offset
+    else
+      x += offset
+    end
+  else
+    if snake.direction.dy == 1 then
+      y -= offset
+    else
+      y += offset
+    end
+  end
+
+  spr(sprite, x, y)
+
+end
 
 -- The rest of the code
 
@@ -136,11 +150,16 @@ function current_cell(snake)
   return { x = snake.x \ 8, y = snake.y \ 8 }
 end
 
+function next_cell(head, direction)
+  return { x = head.x + direction.dx, y = head.y + direction.dy }
+end
+
 function apply_next_turn(snake)
   while #snake.turns > 0 do
     t = snake.turns[1]
     deli(snake.turns, 1)
     if legal_turn(snake.direction, t) then
+      print("Turned " .. snake.direction.dx .. "," .. snake.direction.dy)
       snake.direction = t
       break
     end
@@ -155,37 +174,37 @@ function legal_turn(d, t)
   return d.dx == t.dy or d.dy == t.dx
 end
 
+function xy(cell)
+  return cell.x .. "," .. cell.y
+end
+
 function move(snake)
 
-  snake.x += snake.direction.dx * snake.speed
-  snake.y += snake.direction.dy * snake.speed
+  snake.frames_into_head += 1
 
-  local current = current_cell(snake)
-  local head = head(snake)
-  local tail = tail(snake)
+  if snake.frames_into_head == 30 then
+    -- all the way into the current head.
+    apply_next_turn(snake)
+    old_head = head(snake)
+    new_head = next_cell(old_head, snake.direction)
+    snake.frames_into_head = 0
 
-  -- Entering new cell. If the new cell is off the grid our we are
-  -- crashing into ourself don't actually enter it. If it doesn't
-  -- contain food then we remove our tail.
-  if (current.x ~= head.x or current.y ~= head.y) then
-    local i = to_index(current)
-    if off_board(current) or grid[i] == SNAKE then
+    local i = to_index(new_head)
+    if off_board(new_head) or grid[i] == SNAKE then
       snake.dead = true
     else
       local is_grass = grid[i] == GRASS
-      --print("grid[" .. i .. "] " .. tostring(grid[i]) .. " is_grass: " .. tostring(is_grass))
-      apply_next_turn(snake)
-      spr(1, head.x * 8, head.y * 8) -- draw body segment in old head position.
-      set_head(snake, current)
+      print("head: " .. xy(old_head) .. "; new: " .. xy(new_head))
+      spr(1, old_head.x * 8, old_head.y * 8) -- draw body segment in old head position.
+      set_head(snake, new_head)
       if is_grass then
-        clear_tail(snake, tail)
+        clear_tail(snake, tail(snake))
       else
         random_food()
       end
     end
   end
 end
-
 
 function random_food()
   local n = 1
