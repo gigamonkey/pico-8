@@ -179,6 +179,7 @@ function move(snake)
 
     local i = to_index(new_head)
     if off_board(new_head) or grid[i] == SNAKE then
+      set_head(snake, new_head)
       snake.dead = true
     else
       local is_grass = grid[i] == GRASS
