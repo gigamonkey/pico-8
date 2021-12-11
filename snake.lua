@@ -73,29 +73,13 @@ function _update()
 end
 
 function _draw()
-  local sprite = heads[snake.direction] + ((snake.dead and 4) or 0)
-  local hd = head(snake)
-
   local proportion = snake.frames_into_head / 30
+  local offset = snake.speed * (1 - proportion)
 
-  local x = hd.x * 8
-  local y = hd.y * 8
-
-  local offset = 8 * snake.speed * (1 - proportion)
-
-  if snake.direction.dx != 0 then
-    if snake.direction.dx == 1 then
-      x -= offset
-    else
-      x += offset
-    end
-  else
-    if snake.direction.dy == 1 then
-      y -= offset
-    else
-      y += offset
-    end
-  end
+  local hd = head(snake)
+  local sprite = heads[snake.direction] + ((snake.dead and 4) or 0)
+  local x = 8 * (hd.x - (snake.direction.dx * offset))
+  local y = 8 * (hd.y - (snake.direction.dy * offset))
 
   spr(sprite, x, y)
 
