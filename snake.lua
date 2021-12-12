@@ -18,7 +18,7 @@ heads = { [UP] = 13, [DOWN] = 14, [LEFT] = 15, [RIGHT] = 16 }
 
 snake = {
   direction = RIGHT,
-  speed = 5,
+  speed = 10,
   turns = {},
   head = 0,
   tail = 0,
@@ -209,6 +209,7 @@ function move(snake)
       if is_grass then
         clear_tail(snake, tail(snake))
       else
+        sfx(4)
         random_food()
       end
     end
