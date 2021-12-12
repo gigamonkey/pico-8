@@ -208,14 +208,14 @@ function move(snake)
       set_head(snake, new_head)
       snake.dead = true
       music(-1)
-      sfx(5)
+      sfx(6)
     else
       local is_grass = grid[i] == GRASS
       set_head(snake, new_head)
       if is_grass then
         clear_tail(snake, tail(snake))
       else
-        sfx(4)
+        sfx(5)
         random_food()
       end
     end
