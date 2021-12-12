@@ -18,7 +18,7 @@ heads = { [UP] = 13, [DOWN] = 14, [LEFT] = 15, [RIGHT] = 16 }
 
 snake = {
   direction = RIGHT,
-  speed = 10,
+  speed = 5,
   turns = {},
   head = 0,
   tail = 0,
@@ -235,7 +235,7 @@ function random_food()
   end
   local x = ((pos - 1) % SIZE) * 8;
   local y = ((pos - 1) \ SIZE) * 8;
-  local food = FOOD + flr(rnd(3))
+  local food = FOOD + flr(rnd(5))
   grid[pos] = food
   spr(food, x, y)
 end
