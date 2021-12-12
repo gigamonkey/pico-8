@@ -54,6 +54,8 @@ function _init()
     spr(GRASS, x, y)
     spr(value, x, y)
   end
+
+  music(0)
 end
 
 function _update()
