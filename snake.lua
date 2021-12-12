@@ -22,6 +22,7 @@ snake = {
   turns = {},
   head = 0,
   tail = 0,
+  vacated = nil,
   segments = {},
   dead = false,
   frames_into_head = 0
@@ -82,6 +83,11 @@ function _draw()
   -- by clearing the cell and then redrawing the tail slightly offset.
   --rectfill(0, 0, 128, 24, 2)
 
+  if snake.vacated ~= nil then
+    spr(0, snake.vacated.x * 8, snake.vacated.y * 8)
+    snake.vacated = nil
+  end
+
   local old_tail = previous_tail(snake)
   if old_tail ~= nil then
     local new_tail = tail(snake)
@@ -124,7 +130,7 @@ end
 
 function clear_tail(snake, cell)
   grid[to_index(cell)] = GRASS
-  spr(0, cell.x * 8, cell.y * 8)
+  snake.vacated = previous_tail(snake)
   snake.tail = (snake.tail + 1) % SIZE2D
 end
 
@@ -159,7 +165,6 @@ function apply_next_turn(snake)
     t = snake.turns[1]
     deli(snake.turns, 1)
     if legal_turn(snake.direction, t) then
-      --print("Turned " .. snake.direction.dx .. "," .. snake.direction.dy)
       snake.direction = t
       break
     end
