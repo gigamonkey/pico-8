@@ -109,10 +109,16 @@ function _draw()
   -- way into the current head cell in proportion to how much we've
   -- moved.
   local hd = head(snake)
-  --print("Head  x: " .. hd.x * 8 .. "; y: " .. hd.y * 8, 0, 16, 1)
   local sprite = heads[snake.direction] + ((snake.dead and 4) or 0)
   local x = 8 * (hd.x - (snake.direction.dx * offset))
   local y = 8 * (hd.y - (snake.direction.dy * offset))
+
+  if snake.frames_into_head == 0 then
+    -- When we're just entering the new head the offset will put is
+    -- back in the previous cell so we clear it out so we when we
+    -- redraw the head we get the segments visible.
+    spr(0, x, y)
+  end
   spr(sprite, x, y)
 
 end
@@ -201,10 +207,10 @@ function move(snake)
     if off_board(new_head) or grid[i] == SNAKE then
       set_head(snake, new_head)
       snake.dead = true
+      music(-1)
+      sfx(5)
     else
       local is_grass = grid[i] == GRASS
-      --print("head: " .. xy(old_head) .. "; new: " .. xy(new_head))
-      spr(1, old_head.x * 8, old_head.y * 8) -- draw body segment in old head position.
       set_head(snake, new_head)
       if is_grass then
         clear_tail(snake, tail(snake))
@@ -229,7 +235,7 @@ function random_food()
   end
   local x = ((pos - 1) % SIZE) * 8;
   local y = ((pos - 1) \ SIZE) * 8;
-  local kind = FOOD + flr(rnd(3))
-  grid[pos] = kind
-  spr(kind, x, y)
+  local food = FOOD + flr(rnd(3))
+  grid[pos] = food
+  spr(food, x, y)
 end
