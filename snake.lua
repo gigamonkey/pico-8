@@ -149,6 +149,8 @@ function splash_screen()
   i = row({0,0,0,0,0,1,0,0,0,1,0,0,0,1}, i, 3)
   i = row({0,0,0,0,0,0,0,0,0,0,0,0,0,0}, i, 3)
   i = row({0,0,0,0,0,1,0,0,0,1,0,0,0,1}, i, 3)
+
+  print("press up to start", 31, 118, 6)
 end
 
 
@@ -299,7 +301,7 @@ function random_food()
   end
   local x = ((pos - 1) % SIZE) * 8;
   local y = ((pos - 1) \ SIZE) * 8;
-  local food = FOOD + flr(rnd(5))
+  local food = FOOD + flr(rnd(6))
   grid[pos] = food
   spr(food, x, y)
 end
