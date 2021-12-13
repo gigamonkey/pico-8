@@ -29,8 +29,9 @@ snake = {
   frames_into_head = 0
 }
 
--- Grid is table keyed with x,y coordinates whose values are the
--- contents of that cell, either grass, snake, food, or superfood.
+-- Grid is table keyed with x,y coordinates encoded as integers. The
+-- values are the contents of that cell, either grass, snake, some
+-- kind of food.
 grid = {}
 
 state = 'splash'
@@ -79,10 +80,10 @@ function _draw()
 
     -- Erase tail in proportion to how much we've moved. Actually done
     -- by clearing the cell and then redrawing the tail slightly offset.
-    --rectfill(0, 0, 128, 24, 2)
 
     if snake.vacated ~= nil then
-      spr(0, snake.vacated.x * 8, snake.vacated.y * 8)
+      spr(GRASS, snake.vacated.x * 8, snake.vacated.y * 8)
+      spr(grid[to_index(snake.vacated)], snake.vacated.x * 8, snake.vacated.y * 8)
       snake.vacated = nil
     end
 
@@ -108,7 +109,7 @@ function _draw()
     y = 8 * (hd.y - (snake.direction.dy * offset))
 
     if snake.frames_into_head == 0 then
-      -- When we're just entering the new head the offset will put is
+      -- When we're just entering the new head the offset will put us
       -- back in the previous cell so we clear it out so we when we
       -- redraw the head we get the segments visible.
       spr(0, x, y)
@@ -118,14 +119,16 @@ function _draw()
   end
 end
 
+-- The rest of the code
 
 function splash_screen()
   cls()
   rectfill(0, 0, 127, 127, 1)
   rect(0, 0, 127, 127, 13)
 
-  local i = 0
 
+  -- There's gotta be a better way to do this.
+  local i = 0
   i = row({1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0,1}, i, 3)
   i = row({1,1,1,0,1,0,0,0,1,0,1,0,1,0,1,0,1,0,1}, i, 3)
   i = row({1,0,1,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,1}, i, 3)
@@ -153,8 +156,6 @@ function splash_screen()
   print("press up to start", 31, 118, 6)
 end
 
-
--- The rest of the code
 
 function start_game()
   state = 'playing'
@@ -202,8 +203,8 @@ function set_head(snake, head)
   grid[to_index(head)] = SNAKE
 end
 
-function clear_tail(snake, cell)
-  grid[to_index(cell)] = GRASS
+function clear_tail(snake)
+  grid[to_index(tail(snake))] = GRASS
   snake.vacated = previous_tail(snake)
   snake.tail = (snake.tail + 1) % SIZE2D
 end
@@ -279,12 +280,25 @@ function move(snake)
       local is_grass = grid[i] == GRASS
       set_head(snake, new_head)
       if is_grass then
-        clear_tail(snake, tail(snake))
+        clear_tail(snake)
       else
         sfx(5)
         random_food()
       end
     end
+  end
+end
+
+function poop_mode()
+  local p = previous_tail(snake)
+  if p == nil then
+    random_food()
+  else
+    local x = p.x * 8;
+    local y = p.y * 8;
+    local food = FOOD + flr(rnd(6))
+    grid[to_index(p)] = food
+    spr(food, x, y)
   end
 end
 
