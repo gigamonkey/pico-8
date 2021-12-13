@@ -302,7 +302,7 @@ function random_food()
   end
   local x = ((pos - 1) % SIZE) * 8;
   local y = ((pos - 1) \ SIZE) * 8;
-  local food = FOOD + flr(rnd(6))
+  local food = FOOD + flr(rnd(7))
   grid[pos] = food
   spr(food, x, y)
 end
