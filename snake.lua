@@ -11,10 +11,11 @@ RIGHT = { dx = 1, dy = 0 }
 GRASS = 0
 SNAKE = 1
 FOOD = 2
-SUPER_FOOD = 3
 
 -- sprites for the head.
 heads = { [UP] = 13, [DOWN] = 14, [LEFT] = 15, [RIGHT] = 16 }
+
+-- speeds: 2 really easy. 5 normal. 10 hard. 15 super hard.
 
 snake = {
   direction = RIGHT,
@@ -32,19 +33,135 @@ snake = {
 -- contents of that cell, either grass, snake, food, or superfood.
 grid = {}
 
+state = 'splash'
+
 -- Basic game structure
 
 function _init()
+  set_head(snake, {x=8, y=8})
+  set_head(snake, {x=9, y=8})
+  splash_screen()
+end
+
+function _update()
+  if state == 'splash' then
+    if btnp(2) then
+      start_game()
+    end
+  else
+    if (btnp(0)) then
+      add(snake.turns, LEFT)
+    end
+    if (btnp(1)) then
+      add(snake.turns, RIGHT)
+    end
+    if (btnp(2)) then
+      add(snake.turns, UP)
+    end
+    if (btnp(3)) then
+      add(snake.turns, DOWN)
+    end
+    if not snake.dead then
+      move(snake)
+    end
+  end
+end
+
+function _draw()
+
+  local x = 0
+  local y = 0
+
+  if state == 'playing' then
+    -- speed is in squares/second
+    local proportion = snake.frames_into_head * snake.speed / 30
+    local offset = (1 - proportion)
+
+    -- Erase tail in proportion to how much we've moved. Actually done
+    -- by clearing the cell and then redrawing the tail slightly offset.
+    --rectfill(0, 0, 128, 24, 2)
+
+    if snake.vacated ~= nil then
+      spr(0, snake.vacated.x * 8, snake.vacated.y * 8)
+      snake.vacated = nil
+    end
+
+    local old_tail = previous_tail(snake)
+    if old_tail ~= nil then
+      local new_tail = tail(snake)
+      local td = { dx = new_tail.x - old_tail.x, dy = new_tail.y - old_tail.y }
+
+
+      local tx = old_tail.x + (td.dx * proportion)
+      local ty = old_tail.y + (td.dy * proportion)
+
+      spr(0, old_tail.x * 8, old_tail.y * 8)
+      spr(1, tx * 8, ty * 8)
+    end
+
+    -- Draw head offset back from where it would be if we were all the
+    -- way into the current head cell in proportion to how much we've
+    -- moved.
+    local hd = head(snake)
+    local sprite = heads[snake.direction] + ((snake.dead and 4) or 0)
+    x = 8 * (hd.x - (snake.direction.dx * offset))
+    y = 8 * (hd.y - (snake.direction.dy * offset))
+
+    if snake.frames_into_head == 0 then
+      -- When we're just entering the new head the offset will put is
+      -- back in the previous cell so we clear it out so we when we
+      -- redraw the head we get the segments visible.
+      spr(0, x, y)
+    end
+
+    spr(sprite, x, y)
+  end
+end
+
+
+function splash_screen()
+  cls()
+  rectfill(0, 0, 127, 127, 1)
+  rect(0, 0, 127, 127, 13)
+
+  local i = 0
+
+  i = row({1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0,1}, i, 3)
+  i = row({1,1,1,0,1,0,0,0,1,0,1,0,1,0,1,0,1,0,1}, i, 3)
+  i = row({1,0,1,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,1}, i, 3)
+  i = row({1,0,1,0,1,0,0,0,1,0,1,0,1,0,1,0,0,0,1}, i, 3)
+  i = row({1,0,1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,1,1}, i, 3)
+  i += 1
+  i = row({1,0,1,0,0,0,0,0,1,1,1,0,1,1,1,0,1,1,1}, i, 3)
+  i = row({0,1,0,0,0,0,0,0,1,1,1,0,1,0,1,0,1,0,0}, i, 3)
+  i = row({1,0,1,0,1,1,1,0,1,0,1,0,1,1,1,0,1,1,1}, i, 3)
+  i = row({1,0,1,0,0,0,0,0,1,0,1,0,1,0,1,0,0,0,1}, i, 3)
+  i = row({1,0,1,0,0,0,0,0,1,0,1,0,1,0,1,0,1,1,1}, i, 3)
+  i += 1
+  i = row({1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0,1}, i, 3)
+  i = row({0,1,0,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1}, i, 3)
+  i = row({0,1,0,0,1,1,1,0,1,1,0,0,1,1,0,0,1,1,1}, i, 3)
+  i = row({0,1,0,0,1,0,1,0,1,0,1,0,1,0,1,0,0,0,1}, i, 3)
+  i = row({0,1,0,0,1,0,1,0,1,1,1,0,1,1,1,0,1,1,1}, i, 3)
+  i += 1
+  i = row({0,0,0,0,0,1,0,0,0,1,0,0,0,1}, i, 3)
+  i = row({0,0,0,0,0,1,0,0,0,1,0,0,0,1}, i, 3)
+  i = row({0,0,0,0,0,1,0,0,0,1,0,0,0,1}, i, 3)
+  i = row({0,0,0,0,0,0,0,0,0,0,0,0,0,0}, i, 3)
+  i = row({0,0,0,0,0,1,0,0,0,1,0,0,0,1}, i, 3)
+end
+
+
+-- The rest of the code
+
+function start_game()
+  state = 'playing'
   cls()
   for x = 0, SIZE - 1 do
     for y = 0, SIZE - 1 do
       grid[to_index({x=x, y=y})] = GRASS
     end
   end
-
-  set_head(snake, {x=8, y=8})
-  set_head(snake, {x=9, y=8})
-  snake.frames_into_head = 29
 
   random_food()
 
@@ -54,83 +171,30 @@ function _init()
     spr(GRASS, x, y)
     spr(value, x, y)
   end
-
   music(0)
 end
 
-function _update()
-  if (btnp(0)) then
-    add(snake.turns, LEFT)
-  end
-  if (btnp(1)) then
-    add(snake.turns, RIGHT)
-  end
-  if (btnp(2)) then
-    add(snake.turns, UP)
-  end
-  if (btnp(3)) then
-    add(snake.turns, DOWN)
-  end
-  if not snake.dead then
-    move(snake)
-  end
+function block(x, y, color)
+  local x_offset = 26
+  local y_offset = 18
+  local size = 4
+  rectfill(x_offset + (x * size), y_offset + y * size, x_offset + (x + 1) * size, y_offset + (y + 1) * size, color)
 end
 
-function _draw()
-  -- speed is in squares/second
-  local proportion = snake.frames_into_head * snake.speed / 30
-  local offset = (1 - proportion)
-
-  -- Erase tail in proportion to how much we've moved. Actually done
-  -- by clearing the cell and then redrawing the tail slightly offset.
-  --rectfill(0, 0, 128, 24, 2)
-
-  if snake.vacated ~= nil then
-    spr(0, snake.vacated.x * 8, snake.vacated.y * 8)
-    snake.vacated = nil
+function row(r, y, color)
+  for i, v in pairs(r) do
+    if v == 1 then
+      block(i - 1, y, color)
+    end
   end
-
-  local old_tail = previous_tail(snake)
-  if old_tail ~= nil then
-    local new_tail = tail(snake)
-    local td = { dx = new_tail.x - old_tail.x, dy = new_tail.y - old_tail.y }
-
-    spr(0, old_tail.x * 8, old_tail.y * 8)
-    --print("Clear  x: " .. old_tail.x * 8 .. "; y: " .. old_tail.y * 8, 0, 0, 1)
-
-    local tx = old_tail.x + (td.dx * proportion)
-    local ty = old_tail.y + (td.dy * proportion)
-
-    --print("Draw x: " .. (tx * 8) .. "; y: " .. (ty * 8), 0, 8, 1)
-    spr(1, tx * 8, ty * 8)
-  end
-
-  -- Draw head offset back from where it would be if we were all the
-  -- way into the current head cell in proportion to how much we've
-  -- moved.
-  local hd = head(snake)
-  local sprite = heads[snake.direction] + ((snake.dead and 4) or 0)
-  local x = 8 * (hd.x - (snake.direction.dx * offset))
-  local y = 8 * (hd.y - (snake.direction.dy * offset))
-
-  if snake.frames_into_head == 0 then
-    -- When we're just entering the new head the offset will put is
-    -- back in the previous cell so we clear it out so we when we
-    -- redraw the head we get the segments visible.
-    spr(0, x, y)
-  end
-  spr(sprite, x, y)
-
+  return y + 1
 end
-
--- The rest of the code
 
 function to_index(cell)
   return (cell.y * SIZE + cell.x) + 1
 end
 
 function set_head(snake, head)
-  --print("setting head: " .. xy(head))
   snake.segments[snake.head] = head
   snake.head = (snake.head + 1) % SIZE2D
   grid[to_index(head)] = SNAKE

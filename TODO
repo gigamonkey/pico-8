@@ -1,17 +1,11 @@
 # Snake
 
-- Sound effects for eating.
-
-- Fix seam at tail
-
-- Smooth how tail grows when eating food
-
-- Rounded corners
-
-- Music - something while snake is moving. Maybe a sound on turns. Sounds when eating.
-
-- Game over - stop music, play sound effect, etc.
+- Track down no food bug.
 
 - Opening screen.
+
+- Game over screen.
+
+- Score
 
 - Possibly normalize LEFT, RIGHT, UP, DOWN as 0, 1, 2, 3 to match buttons. Requires moving sprites around.
