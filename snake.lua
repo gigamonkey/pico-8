@@ -289,19 +289,6 @@ function move(snake)
   end
 end
 
-function poop_mode()
-  local p = previous_tail(snake)
-  if p == nil then
-    random_food()
-  else
-    local x = p.x * 8;
-    local y = p.y * 8;
-    local food = FOOD + flr(rnd(6))
-    grid[to_index(p)] = food
-    spr(food, x, y)
-  end
-end
-
 function random_food()
   local n = 1
   local pos = nil
