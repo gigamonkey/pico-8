@@ -74,6 +74,11 @@ function _draw()
   local y = 0
 
   if state == 'playing' then
+
+    local score_start = 128 - ((10 * 4) + 2)
+    rectfill(score_start, 0, 127, 7, 13)
+    print("score: " .. score(), score_start, 2, 6)
+
     -- speed is in squares/second
     local proportion = snake.frames_into_head * snake.speed / 30
     local offset = (1 - proportion)
@@ -193,6 +198,17 @@ function row(r, y, color)
   return y + 1
 end
 
+function score()
+  local s = length(snake) - 2
+  if s < 10 then
+    return "00" .. s
+  elseif s < 100 then
+      return "0" .. s
+  else
+    return "" .. s
+  end
+end
+
 function to_index(cell)
   return (cell.y * SIZE + cell.x) + 1
 end
@@ -231,6 +247,10 @@ function current_cell(snake)
   return { x = snake.x \ 8, y = snake.y \ 8 }
 end
 
+function length(snake)
+  return (SIZE2D + (snake.head - snake.tail)) % SIZE2D
+end
+
 function next_cell(head, direction)
   return { x = head.x + direction.dx, y = head.y + direction.dy }
 end
@@ -257,6 +277,7 @@ end
 function xy(cell)
   return cell.x .. "," .. cell.y
 end
+
 
 function move(snake)
 
