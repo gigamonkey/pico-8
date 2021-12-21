@@ -1,11 +1,7 @@
 # Snake
 
-- Reserve top row for score
-
 - Extra lives.
 
 - Game over screen.
-
-- Score
 
 - Possibly normalize LEFT, RIGHT, UP, DOWN as 0, 1, 2, 3 to match buttons. Requires moving sprites around.

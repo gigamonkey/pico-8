@@ -50,16 +50,16 @@ function _update()
       start_game()
     end
   else
-    if (btnp(0)) then
+    if btnp(0) then
       add(snake.turns, LEFT)
     end
-    if (btnp(1)) then
+    if btnp(1) then
       add(snake.turns, RIGHT)
     end
-    if (btnp(2)) then
+    if btnp(2) then
       add(snake.turns, UP)
     end
-    if (btnp(3)) then
+    if btnp(3) then
       add(snake.turns, DOWN)
     end
     if not snake.dead then
@@ -76,8 +76,8 @@ function _draw()
   if state == 'playing' then
 
     local score_start = 128 - ((10 * 4) + 2)
-    rectfill(score_start, 0, 127, 7, 13)
-    print("score: " .. score(), score_start, 2, 6)
+    rectfill(0, 0, 127, 7, 5)
+    print("score: " .. score(), score_start, 1, 6)
 
     -- speed is in squares/second
     local proportion = snake.frames_into_head * snake.speed / 30
@@ -267,7 +267,7 @@ function apply_next_turn(snake)
 end
 
 function off_board(cell)
-  return cell.x < 0 or cell.x >= SIZE or cell.y < 0 or cell.y >= SIZE
+  return cell.x < 0 or cell.x >= SIZE or cell.y < 1 or cell.y >= SIZE
 end
 
 function legal_turn(d, t)
@@ -314,7 +314,7 @@ function random_food()
   local n = 1
   local pos = nil
   for cell, value in pairs(grid) do
-    if value == GRASS then
+    if cell >= SIZE and value == GRASS then
       if rnd(1) < 1/n then
         pos = cell
       end
