@@ -49,6 +49,8 @@ function _update()
     if btnp(2) then
       start_game()
     end
+  elseif snake.dead then
+      game_over()
   else
     if btnp(0) then
       add(snake.turns, LEFT)
@@ -159,6 +161,13 @@ function splash_screen()
   i = row({0,0,0,0,0,1,0,0,0,1,0,0,0,1}, i, 3)
 
   print("press up to start", 31, 118, 6)
+end
+
+
+function game_over()
+  rectfill(32, 48, 96, 80, 0)
+  rect(32, 48, 96, 80, 1)
+  print("game over", 47, 60, 6)
 end
 
 
