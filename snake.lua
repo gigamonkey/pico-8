@@ -1,5 +1,6 @@
 -- snake
 
+
 SIZE = 16 -- 128px display / 8px sprites.
 SIZE2D = SIZE * SIZE
 
@@ -11,6 +12,8 @@ RIGHT = { dx = 1, dy = 0 }
 GRASS = 0
 SNAKE = 1
 FOOD = 2
+
+NEW_LIFE = 20
 
 -- sprites for the head.
 heads = { [UP] = 13, [DOWN] = 14, [LEFT] = 15, [RIGHT] = 16 }
@@ -28,6 +31,9 @@ snake = {
   dead = false,
   frames_into_head = 0
 }
+
+score = 0
+lives = 3
 
 -- Grid is table keyed with x,y coordinates encoded as integers. The
 -- values are the contents of that cell, either grass, snake, some
@@ -49,7 +55,20 @@ function _update()
     if btnp(2) then
       start_game()
     end
-  elseif snake.dead then
+  elseif state == 'died' then
+    lives -= 1
+    if lives == 0 then
+      state = 'game over'
+    else
+      snake = new_snake()
+      state = 'next life'
+    end
+  elseif state == 'next life' then
+    pause()
+    if btnp(2) then
+      restart_game()
+    end
+  elseif state == 'game over' then
       game_over()
   else
     if btnp(0) then
@@ -66,6 +85,8 @@ function _update()
     end
     if not snake.dead then
       move(snake)
+    else
+      state = 'died'
     end
   end
 end
@@ -79,7 +100,10 @@ function _draw()
 
     local score_start = 128 - ((10 * 4) + 2)
     rectfill(0, 0, 127, 7, 5)
-    print("score: " .. score(), score_start, 1, 6)
+    for i=0, lives - 2 do
+      spr(13, 1 + (i * 9), 0)
+    end
+    print("score: " .. score_string(), score_start, 1, 6)
 
     -- speed is in squares/second
     local proportion = snake.frames_into_head * snake.speed / 30
@@ -164,12 +188,38 @@ function splash_screen()
 end
 
 
+function pause()
+  rectfill(32, 48, 96, 80, 0)
+  rect(32, 48, 96, 80, 1)
+  print("press up", 49, 56, 6)
+  print("to continue", 44, 64, 6)
+end
+
 function game_over()
   rectfill(32, 48, 96, 80, 0)
   rect(32, 48, 96, 80, 1)
   print("game over", 47, 60, 6)
 end
 
+function restart_game()
+  set_head(snake, {x=8, y=8})
+  set_head(snake, {x=9, y=8})
+  start_game()
+end
+
+function new_snake()
+  return {
+    direction = RIGHT,
+    speed = 5,
+    turns = {},
+    head = 0,
+    tail = 0,
+    vacated = nil,
+    segments = {},
+    dead = false,
+    frames_into_head = 0
+  }
+end
 
 function start_game()
   state = 'playing'
@@ -207,14 +257,13 @@ function row(r, y, color)
   return y + 1
 end
 
-function score()
-  local s = length(snake) - 2
-  if s < 10 then
-    return "00" .. s
-  elseif s < 100 then
-      return "0" .. s
+function score_string()
+  if score < 10 then
+    return "00" .. score
+  elseif score < 100 then
+      return "0" .. score
   else
-    return "" .. s
+    return "" .. score
   end
 end
 
@@ -314,6 +363,11 @@ function move(snake)
       else
         sfx(5)
         random_food()
+        score += 1
+        if score % NEW_LIFE == 0 and lives < 10 then
+          lives += 1
+          sfx(7)
+        end
       end
     end
   end
